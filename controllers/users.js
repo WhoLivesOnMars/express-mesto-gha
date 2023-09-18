@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/user');
 
 module.exports.getUsers = (req, res) => {
@@ -7,19 +8,23 @@ module.exports.getUsers = (req, res) => {
 };
 
 module.exports.getUser = (req, res) => {
-  User.findById(req.params.userId)
+  const { userId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).send({ message: 'Некорректный формат _id пользователя' });
+    return;
+  }
+
+  User.findById(userId)
     .then((user) => {
       if (!user) {
         res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
-      }
-      return res.send({ data: user });
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя' });
       } else {
-        res.status(500).send({ message: 'Произошла ошибка' });
+        res.send({ data: user });
       }
+    })
+    .catch(() => {
+      res.status(500).send({ message: 'Произошла ошибка' });
     });
 };
 
