@@ -75,7 +75,7 @@ module.exports.updateUser = (req, res) => {
 module.exports.updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
 
-  User.findByIdAndUpdate(req.user._id, { avatar })
+  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
     .then((user) => {
       if (!user) {
         res.status(404).send({ message: 'Пользователь с указанным _id не найден' });

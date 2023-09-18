@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Card = require('../models/card');
 
 module.exports.getCards = (req, res) => {
@@ -46,6 +47,11 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.likeCard = (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.cardId)) {
+    res.status(400).send({ message: 'Переданы некорректные данные для постановки лайка' });
+    return;
+  }
+
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -53,15 +59,13 @@ module.exports.likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки' });
+        res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+      } else {
+        res.send(card);
       }
-      return res.send(card);
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные для постановки лайка' });
-      }
-      return res.status(500).send({ message: 'Произошла ошибка' });
+    .catch(() => {
+      res.status(500).send({ message: 'Произошла ошибка' });
     });
 };
 
