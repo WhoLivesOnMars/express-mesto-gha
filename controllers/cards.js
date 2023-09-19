@@ -8,17 +8,24 @@ module.exports.getCards = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.cardId)) {
+    res.status(400).send({ message: 'Переданы некорректные данные для удаления карточки' });
+    return;
+  }
+
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+        res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+        return;
       }
 
       if (card.owner.toString() !== req.user._id) {
-        return res.status(403).send({ message: 'Вы не можете удалить эту карточку' });
+        res.status(403).send({ message: 'Вы не можете удалить эту карточку' });
+        return;
       }
 
-      return res.status(200).send({ message: 'Карточка удалена' });
+      res.status(200).send({ message: 'Карточка удалена' });
     })
     .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 };
@@ -70,6 +77,11 @@ module.exports.likeCard = (req, res) => {
 };
 
 module.exports.dislikeCard = (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.cardId)) {
+    res.status(400).send({ message: 'Переданы некорректные данные для снятия лайка' });
+    return;
+  }
+
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } }, // убрать _id из массива
@@ -77,15 +89,13 @@ module.exports.dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки' });
+        res.status(404).send({ message: 'Передан несуществующий _id карточки' });
+        return;
       }
 
-      return res.send(card);
+      res.send(card);
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные для снятия лайка' });
-      }
-      return res.status(500).send({ message: 'Произошла ошибка' });
+    .catch(() => {
+      res.status(500).send({ message: 'Произошла ошибка' });
     });
 };
