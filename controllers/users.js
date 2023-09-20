@@ -45,12 +45,12 @@ module.exports.createUser = (req, res) => {
 module.exports.updateUser = (req, res) => {
   const { name, about } = req.body;
 
-  if (name.length < 2 || about.length < 2) {
+  if (typeof name !== 'string' || typeof about !== 'string') {
     res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
     return;
   }
 
-  if (name.length > 30 || about.length > 30) {
+  if (name.length < 2 || about.length < 2 || name.length > 30 || about.length > 30) {
     res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
     return;
   }
