@@ -49,15 +49,13 @@ module.exports.getUser = (req, res) => {
   User.findById(userId)
     .orFail(new mongoose.Error.DocumentNotFoundError())
     .then((user) => {
-      if (!user) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден' });
-      } else {
-        res.status(HTTP_STATUS_OK).send({ data: user });
-      }
+      res.status(HTTP_STATUS_OK).send({ data: user });
     })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
         res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный формат _id пользователя' });
+      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
+        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден' });
       } else {
         res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка' });
       }
