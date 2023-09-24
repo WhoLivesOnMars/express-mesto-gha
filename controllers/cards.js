@@ -5,6 +5,7 @@ const Card = require('../models/card');
 const {
   HTTP_STATUS_OK,
   HTTP_STATUS_CREATED,
+  HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_FORBIDDEN,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -20,6 +21,10 @@ module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .orFail(new mongoose.Error.DocumentNotFoundError())
     .then((card) => {
+      if (!card) {
+        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' });
+        return;
+      }
       if (card.owner.toString() !== req.user._id) {
         res.status(HTTP_STATUS_FORBIDDEN).send({ message: 'Вы не можете удалить эту карточку' });
       } else {
@@ -66,7 +71,11 @@ module.exports.likeCard = (req, res) => {
   )
     .orFail(new mongoose.Error.DocumentNotFoundError())
     .then((card) => {
-      res.status(HTTP_STATUS_OK).send(card);
+      if (!card) {
+        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' });
+      } else {
+        res.status(HTTP_STATUS_OK).send(card);
+      }
     })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
@@ -85,7 +94,11 @@ module.exports.dislikeCard = (req, res) => {
   )
     .orFail(new mongoose.Error.DocumentNotFoundError())
     .then((card) => {
-      res.status(HTTP_STATUS_OK).send(card);
+      if (!card) {
+        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' });
+      } else {
+        res.status(HTTP_STATUS_OK).send(card);
+      }
     })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
