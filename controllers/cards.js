@@ -2,43 +2,53 @@ const http2 = require('node:http2');
 const mongoose = require('mongoose');
 const Card = require('../models/card');
 
+const NotFoundError = require('../errors/not-found-err');
+const BadRequestError = require('../errors/bad-request-err');
+const ForbiddenError = require('../errors/forbidden-err');
+
 const {
   HTTP_STATUS_OK,
   HTTP_STATUS_CREATED,
-  HTTP_STATUS_NOT_FOUND,
-  HTTP_STATUS_BAD_REQUEST,
-  HTTP_STATUS_FORBIDDEN,
-  HTTP_STATUS_INTERNAL_SERVER_ERROR,
 } = http2.constants;
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.status(HTTP_STATUS_OK).send({ data: cards }))
-    .catch(() => res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      next(err);
+    });
 };
 
-module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .orFail(new mongoose.Error.DocumentNotFoundError())
+module.exports.deleteCard = (req, res, next) => {
+  Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new NotFoundError('Карточка с таким id не найдена');
+    })
     .then((card) => {
       if (card.owner.toString() !== req.user._id) {
-        res.status(HTTP_STATUS_FORBIDDEN).send({ message: 'Вы не можете удалить эту карточку' });
+        throw new ForbiddenError('Вы не можете удалить эту карточку');
       } else {
-        res.status(HTTP_STATUS_OK).send({ message: 'Карточка удалена' });
+        Card.findByIdAndRemove(req.params.cardId)
+          .then(() => {
+            res.status(HTTP_STATUS_OK).send({ message: 'Карточка удалена' });
+          })
+          .catch((err) => {
+            next(err);
+          });
       }
     })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный формат _id карточки' });
+        next(new BadRequestError('Некорректный формат _id карточки'));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' });
+        next(new NotFoundError('Карточка с указанным _id не найдена'));
       } else {
-        res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка' });
+        next(err);
       }
     });
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const {
     name,
     link,
@@ -55,13 +65,13 @@ module.exports.createCard = (req, res) => {
     .then((card) => res.status(HTTP_STATUS_CREATED).send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки' });
+        next(new BadRequestError('Переданы некорректные данные при создании карточки'));
       }
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка' });
+      return next(err);
     });
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.findByIdAndUpdate(
@@ -69,38 +79,42 @@ module.exports.likeCard = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(new mongoose.Error.DocumentNotFoundError())
+    .orFail(() => {
+      throw new NotFoundError('Карточка не найдена');
+    })
     .then((card) => {
       res.status(HTTP_STATUS_OK).send(card);
     })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный формат _id карточки' });
+        next(new BadRequestError('Некорректный формат _id карточки'));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' });
+        next(new NotFoundError('Карточка с указанным _id не найдена'));
       } else {
-        res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка' });
+        next(err);
       }
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(new mongoose.Error.DocumentNotFoundError())
+    .orFail(() => {
+      throw new NotFoundError('Карточка не найдена');
+    })
     .then((card) => {
       res.status(HTTP_STATUS_OK).send(card);
     })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный формат _id карточки' });
+        next(new BadRequestError('Некорректный формат _id карточки'));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' });
+        next(new NotFoundError('Карточка с указанным _id не найдена'));
       } else {
-        res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка' });
+        next(err);
       }
     });
 };
