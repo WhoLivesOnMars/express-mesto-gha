@@ -102,21 +102,24 @@ module.exports.createUser = (req, res, next) => {
       name,
       about,
       avatar,
-    }))
-    .then((user) => res.status(HTTP_STATUS_CREATED).send({
-      email: user.email,
-      name,
-      about,
-      avatar,
-    }))
+    })
+      .then((user) => res.status(HTTP_STATUS_CREATED).send({
+        email: user.email,
+        name,
+        about,
+        avatar,
+      }))
+      .catch((err) => {
+        if (err.code === 11000) {
+          next(new ConflictError('Пользователь с указанным email уже существует'));
+        } else if (err.name === 'ValidationError') {
+          next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+        } else {
+          next(err);
+        }
+      }))
     .catch((err) => {
-      if (err.code === 11000) {
-        next(new ConflictError('Пользователь с указанным email уже существует'));
-      } else if (err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
-      } else {
-        next(err);
-      }
+      next(err);
     });
 };
 
@@ -137,6 +140,10 @@ module.exports.login = (req, res, next) => {
       return res.status(HTTP_STATUS_CREATED).send({ token });
     })
     .catch((err) => {
-      next(err);
+      if (err instanceof UnauthorizedError) {
+        res.status(401).send({ message: err.message });
+      } else {
+        next(err);
+      }
     });
 };
