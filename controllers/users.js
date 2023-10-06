@@ -44,7 +44,9 @@ module.exports.updateUserAvatar = (req, res, next) => {
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.status(HTTP_STATUS_OK).send(users))
+    .then((users) => {
+      res.send(users);
+    })
     .catch((err) => {
       next(err);
     });
@@ -102,12 +104,12 @@ module.exports.createUser = (req, res, next) => {
       avatar,
     })
       .then((user) => {
-        const statusCode = user ? HTTP_STATUS_CREATED : HTTP_STATUS_OK;
-        res.status(statusCode).send({
+        res.status(HTTP_STATUS_CREATED).send({
+          _id: user._id,
           email: user.email,
-          name,
-          about,
-          avatar,
+          name: user.name,
+          about: user.about,
+          avatar: user.avatar,
         });
       })
       .catch((err) => {
