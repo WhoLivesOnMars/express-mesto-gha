@@ -44,7 +44,7 @@ module.exports.updateUserAvatar = (req, res, next) => {
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.status(HTTP_STATUS_OK).send({ data: users }))
+    .then((users) => res.status(HTTP_STATUS_OK).send(users))
     .catch((err) => {
       next(err);
     });
@@ -76,9 +76,7 @@ module.exports.getCurrentUser = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError('Пользователь с указанным id не существует');
     })
-    .then((user) => {
-      res.status(HTTP_STATUS_OK).send({ data: user });
-    })
+    .then((user) => res.status(HTTP_STATUS_OK).send(user))
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
         next(new BadRequestError('Некорректный формат _id пользователя'));
