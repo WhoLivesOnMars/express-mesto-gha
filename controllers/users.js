@@ -76,7 +76,9 @@ module.exports.getCurrentUser = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError('Пользователь с указанным id не существует');
     })
-    .then((user) => res.status(HTTP_STATUS_OK).send(user))
+    .then((user) => {
+      res.status(HTTP_STATUS_OK).send(user);
+    })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
         next(new BadRequestError('Некорректный формат _id пользователя'));
@@ -127,22 +129,21 @@ module.exports.login = (req, res, next) => {
 
   User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user) {
-        throw new UnauthorizedError('Указаны неверные логин или пароль');
-      }
-
-      const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
-      res.cookie('jwt', token, {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-      return res.status(HTTP_STATUS_OK).send({ token });
+      bcrypt.compare(String(password), user.password)
+        .then((isValidUser) => {
+          if (isValidUser) {
+            const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
+            res.cookie('jwt', token, {
+              httpOnly: true,
+              maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
+            res.send({ token });
+          } else {
+            throw new UnauthorizedError('Указаны неверные логин или пароль');
+          }
+        });
     })
     .catch((err) => {
-      if (err instanceof UnauthorizedError) {
-        res.status(401).send({ message: err.message });
-      } else {
-        next(err);
-      }
+      next(err);
     });
 };
