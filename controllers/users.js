@@ -93,15 +93,13 @@ module.exports.getCurrentUser = (req, res, next) => {
 };
 
 module.exports.createUser = (req, res, next) => {
-  const { name, about, avatar } = req.body;
-
   bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
       email: req.body.email,
       password: hash,
-      name,
-      about,
-      avatar,
+      name: req.body.name,
+      about: req.body.about,
+      avatar: req.body.avatar,
     })
       .then((user) => {
         res.status(HTTP_STATUS_CREATED).send({
@@ -120,10 +118,7 @@ module.exports.createUser = (req, res, next) => {
         } else {
           next(err);
         }
-      }))
-    .catch((err) => {
-      next(err);
-    });
+      }));
 };
 
 module.exports.login = (req, res, next) => {
