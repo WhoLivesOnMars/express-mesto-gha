@@ -24,7 +24,9 @@ const updateUser = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError('Пользователь с указанным id не существует');
     })
-    .then((user) => res.status(HTTP_STATUS_OK).send({ data: user }))
+    .then((user) => {
+      res.send(user);
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при обновлении'));
