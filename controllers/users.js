@@ -41,7 +41,7 @@ module.exports.updateUser = (req, res) => {
 
 module.exports.updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
-  updateUser(req, res, { avatar });
+  updateUser(req, res, { avatar }, true);
 };
 
 module.exports.getUsers = (req, res, next) => {
@@ -103,12 +103,15 @@ module.exports.createUser = (req, res, next) => {
       about,
       avatar,
     })
-      .then((user) => res.status(HTTP_STATUS_CREATED).send({
-        email: user.email,
-        name,
-        about,
-        avatar,
-      }))
+      .then((user) => {
+        const statusCode = user ? HTTP_STATUS_CREATED : HTTP_STATUS_OK;
+        res.status(statusCode).send({
+          email: user.email,
+          name,
+          about,
+          avatar,
+        });
+      })
       .catch((err) => {
         if (err.code === 11000) {
           next(new ConflictError('Пользователь с указанным email уже существует'));
@@ -137,7 +140,7 @@ module.exports.login = (req, res, next) => {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-      return res.status(HTTP_STATUS_CREATED).send({ token });
+      return res.status(HTTP_STATUS_OK).send({ token });
     })
     .catch((err) => {
       if (err instanceof UnauthorizedError) {
