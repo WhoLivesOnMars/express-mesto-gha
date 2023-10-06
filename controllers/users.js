@@ -34,13 +34,12 @@ const updateUser = (req, res, next) => {
     });
 };
 
-module.exports.updateUser = (req, res) => {
-  const { name, about } = req.body;
-  updateUser(req, res, { name, about });
+module.exports.updateUser = (req, res, next) => {
+  updateUser(req, res, next);
 };
 
-module.exports.updateUserAvatar = (req, res) => {
-  updateUser(req, res, {});
+module.exports.updateUserAvatar = (req, res, next) => {
+  updateUser(req, res, next);
 };
 
 module.exports.getUsers = (req, res, next) => {
