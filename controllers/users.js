@@ -15,10 +15,10 @@ const {
   HTTP_STATUS_CREATED,
 } = http2.constants;
 
-const updateUser = (req, res, next, updateData) => {
+const updateUser = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
-    updateData,
+    req.body,
     { new: true, runValidators: true },
   )
     .orFail(() => {
@@ -40,8 +40,7 @@ module.exports.updateUser = (req, res) => {
 };
 
 module.exports.updateUserAvatar = (req, res) => {
-  const { avatar } = req.body;
-  updateUser(req, res, { avatar }, true);
+  updateUser(req, res, {});
 };
 
 module.exports.getUsers = (req, res, next) => {
