@@ -7,7 +7,6 @@ const User = require('../models/user');
 
 const NotFoundError = require('../errors/not-found-err');
 const BadRequestError = require('../errors/bad-request-err');
-const UnauthorizedError = require('../errors/unauthorized-err');
 const ConflictError = require('../errors/conflict-err');
 
 const {
@@ -67,8 +66,6 @@ module.exports.getUser = (req, res, next) => {
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
         next(new BadRequestError('Некорректный формат _id пользователя'));
-      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Пользователь по указанному _id не найден'));
       } else {
         next(err);
       }
@@ -86,8 +83,6 @@ module.exports.getCurrentUser = (req, res, next) => {
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
         next(new BadRequestError('Некорректный формат _id пользователя'));
-      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Пользователь по указанному _id не найден'));
       } else {
         next(err);
       }
@@ -128,19 +123,12 @@ module.exports.login = (req, res, next) => {
 
   User.findUserByCredentials(email, password)
     .then((user) => {
-      bcrypt.compare(String(password), user.password)
-        .then((isValidUser) => {
-          if (isValidUser) {
-            const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
-            res.cookie('jwt', token, {
-              httpOnly: true,
-              maxAge: 7 * 24 * 60 * 60 * 1000,
-            });
-            res.send({ token });
-          } else {
-            throw new UnauthorizedError('Указаны неверные логин или пароль');
-          }
-        });
+      const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.send({ token });
     })
     .catch((err) => {
       next(err);

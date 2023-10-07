@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
   try {
     payload = jwt.verify(token, 'super-strong-secret');
   } catch (err) {
-    next(new UnauthorizedError('Требуется авторизация'));
+    throw new UnauthorizedError('Требуется авторизация');
   }
 
   req.user = payload; // записываем пейлоуд в объект запроса

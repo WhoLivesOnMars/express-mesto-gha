@@ -8,6 +8,7 @@ const { PORT = 3000 } = process.env;
 
 const routes = require('./routes');
 const errorHandler = require('./middlewares/error-handler');
+const NotFoundError = require('./errors/not-found-err');
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
@@ -20,8 +21,8 @@ app.use(cookieParser());
 
 app.use('/', routes);
 
-app.use((req, res) => {
-  res.status(404).json({ message: 'Запрашиваемый ресурс не найден' });
+app.use((req, res, next) => {
+  next(new NotFoundError('Запрашиваемый ресурс не найден'));
 });
 
 app.use(errors());

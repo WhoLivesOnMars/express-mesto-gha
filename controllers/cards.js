@@ -40,8 +40,6 @@ module.exports.deleteCard = (req, res, next) => {
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
         next(new BadRequestError('Некорректный формат _id карточки'));
-      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Карточка с указанным _id не найдена'));
       } else {
         next(err);
       }
@@ -52,22 +50,19 @@ module.exports.createCard = (req, res, next) => {
   const {
     name,
     link,
-    likes,
-    createdAt,
   } = req.body;
   Card.create({
     name,
     link,
     owner: req.user._id,
-    likes,
-    createdAt,
   })
     .then((card) => res.status(HTTP_STATUS_CREATED).send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при создании карточки'));
+      } else {
+        next(err);
       }
-      return next(err);
     });
 };
 
@@ -88,8 +83,6 @@ module.exports.likeCard = (req, res, next) => {
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
         next(new BadRequestError('Некорректный формат _id карточки'));
-      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Карточка с указанным _id не найдена'));
       } else {
         next(err);
       }
@@ -111,8 +104,6 @@ module.exports.dislikeCard = (req, res, next) => {
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
         next(new BadRequestError('Некорректный формат _id карточки'));
-      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Карточка с указанным _id не найдена'));
       } else {
         next(err);
       }
