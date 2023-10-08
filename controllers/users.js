@@ -1,7 +1,7 @@
 const http2 = require('node:http2');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const jwtoken = require('jsonwebtoken');
 
 const User = require('../models/user');
 
@@ -73,18 +73,14 @@ module.exports.getUser = (req, res, next) => {
 };
 
 module.exports.getCurrentUser = (req, res, next) => {
+  console.log('Current User Request - req.user:', req.user);
   User.findById(req.user._id)
+    .orFail(() => {
+      throw new NotFoundError('Пользователь с указанным id не существует');
+    })
     .then((user) => {
-      if (!user) {
-        throw new NotFoundError('Нет пользователя с таким id');
-      }
-      res.status(HTTP_STATUS_OK).send({
-        _id: user._id,
-        name: user.name,
-        about: user.about,
-        avatar: user.avatar,
-        email: user.email,
-      });
+      console.log('User found:', user);
+      res.status(HTTP_STATUS_OK).send(user);
     })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
@@ -129,12 +125,12 @@ module.exports.login = (req, res, next) => {
 
   User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
-      res.cookie('jwt', token, {
+      const jwt = jwtoken.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
+      res.cookie('jwt', jwt, {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-      res.send({ token });
+      res.send({ token: jwt });
     })
     .catch((err) => {
       next(err);
