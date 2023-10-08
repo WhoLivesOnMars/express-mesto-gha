@@ -14,7 +14,7 @@ const {
   HTTP_STATUS_CREATED,
 } = http2.constants;
 
-const updateUser = (req, res, next) => {
+module.exports.updateUser = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
     req.body,
@@ -33,14 +33,6 @@ const updateUser = (req, res, next) => {
         next(err);
       }
     });
-};
-
-module.exports.updateUser = (req, res, next) => {
-  updateUser(req, res, next);
-};
-
-module.exports.updateUserAvatar = (req, res, next) => {
-  updateUser(req, res, next);
 };
 
 module.exports.getUsers = (req, res, next) => {

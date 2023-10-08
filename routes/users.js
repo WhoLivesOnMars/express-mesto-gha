@@ -5,7 +5,6 @@ const {
   getUser,
   getCurrentUser,
   updateUser,
-  updateUserAvatar,
 } = require('../controllers/users');
 
 router.get('/me', getCurrentUser);
@@ -25,6 +24,6 @@ router.patch('/me/avatar', celebrate({
   body: Joi.object().keys({
     avatar: Joi.string().uri({ scheme: ['http', 'https'] }).required(),
   }),
-}), updateUserAvatar);
+}), updateUser);
 
 module.exports = router;
