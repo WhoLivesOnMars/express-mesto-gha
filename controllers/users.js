@@ -74,11 +74,17 @@ module.exports.getUser = (req, res, next) => {
 
 module.exports.getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
-    .orFail(() => {
-      throw new NotFoundError('Пользователь с указанным id не существует');
-    })
     .then((user) => {
-      res.status(HTTP_STATUS_OK).send(user);
+      if (!user) {
+        throw new NotFoundError('Нет пользователя с таким id');
+      }
+      res.status(HTTP_STATUS_OK).send({
+        _id: user._id,
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+      });
     })
     .catch((err) => {
       if (err instanceof mongoose.CastError) {
